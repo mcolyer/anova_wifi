@@ -6,6 +6,9 @@ from .precission_cooker import (
     APCUpdateBinary,
     APCUpdateSensor,
 )
+from .precision_oven import (
+    AnovaPrecisionOven,
+)
 
 __version__ = "0.10.3"
 
@@ -15,6 +18,7 @@ __all__ = [
     "AnovaException",
     "InvalidLogin",
     "AnovaPrecisionCooker",
+    "AnovaPrecisionOven",
     "NoDevicesFound",
     "APCUpdate",
     "APCUpdateSensor",

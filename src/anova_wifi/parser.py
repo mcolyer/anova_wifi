@@ -9,6 +9,7 @@ import aiohttp
 
 from anova_wifi.exceptions import AnovaException, InvalidLogin, NoDevicesFound
 from anova_wifi.precission_cooker import AnovaPrecisionCooker
+from anova_wifi.precision_oven import AnovaPrecisionOven
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ class AnovaApi:
         """Get all devices by connecting to anova websocket"""
         if self._firebase_jwt is None or self.jwt is None:
             raise AnovaException("Cannot get devices without first authenticating")
-        url = f"https://devices.anovaculinary.io/?token={self._firebase_jwt}&supportedAccessories=APC&platform=android"
+        url = f"https://devices.anovaculinary.io/?token={self._firebase_jwt}&supportedAccessories=APC,APO&platform=android"
         user_devices = []
         timeout = time.time() + 5  # 5 seconds from now
 
@@ -104,6 +105,21 @@ class AnovaApi:
                         user_devices.append(
                             AnovaPrecisionCooker(
                                 self.session, device[0], device[1], self.jwt
+                            )
+                        )
+                elif data.get("command") == "EVENT_APO_WIFI_VERSION":
+                    _LOGGER.debug("Found Event APO WIFI")
+                    payload = data.get("payload")
+                    devices: typing.List[Tuple[str, str]] = [
+                        (d["cookerId"], d["type"])
+                        for d in payload
+                        if d["cookerId"] not in existing_devices_keys
+                    ]
+                    for device in devices:
+                        _LOGGER.debug("Found device %s", device[0])
+                        user_devices.append(
+                            AnovaPrecisionOven(
+                                self.session, device[0], device[1], self._firebase_jwt
                             )
                         )
         if len(user_devices) == 0:
